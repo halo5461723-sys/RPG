@@ -3,281 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Island Ultimate v2</title>
+    <title>RPG Island V14</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .screen { display: none; width: 100%; max-width: 700px; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        body { background: #0f172a; color: white; font-family: sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .screen { display: none; width: 100%; max-width: 500px; background: #1e293b; padding: 15px; border-radius: 10px; border: 1px solid #334155; text-align: center; }
         .active { display: block; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .box { background: #020617; padding: 10px; border-radius: 8px; border: 1px solid #334155; }
-        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; background: #0f172a; color: white; }
-        button { background: #334155; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin: 2px; font-size: 13px; }
-        button:hover { background: var(--accent); color: #000; }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
-        .hp-bar { background: #450a0a; height: 15px; border-radius: 10px; overflow: hidden; margin: 5px 0; border: 1px solid #000; }
-        .hp-fill { background: #ef4444; height: 100%; transition: 0.3s; width: 100%; }
-        .tab-content { display: none; margin-top: 15px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #475569; }
-        .log { background: #000; height: 120px; overflow-y: auto; padding: 8px; font-size: 12px; border-radius: 5px; margin-top: 10px; border: 1px solid #334155; text-align: left; }
+        input, select { width: 80%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #334155; background: #0f172a; color: white; }
+        button { background: #38bdf8; color: #000; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; }
+        .hp-bar { background: #450a0a; height: 15px; border-radius: 10px; margin: 10px 0; border: 1px solid #000; overflow: hidden; }
+        .hp-fill { background: #ef4444; height: 100%; width: 100%; transition: 0.3s; }
+        .item-row { display: flex; justify-content: space-between; background: #0f172a; padding: 8px; margin: 5px 0; border-radius: 5px; font-size: 13px; border: 1px solid #334155; }
+        .log { background: #000; height: 100px; overflow-y: auto; padding: 10px; font-size: 12px; border-radius: 5px; margin-top: 10px; text-align: left; border: 1px solid #334155; }
     </style>
 </head>
 <body>
 
-<div id="auth-screen" class="screen active" style="text-align: center;">
-    <h2>⚔️ RPG ISLAND LOGIN</h2>
-    <input type="text" id="user" placeholder="Tên tài khoản...">
-    <input type="password" id="pass" placeholder="Mật khẩu...">
-    <br>
-    <button onclick="handleAuth()" style="width: 95%; font-size: 16px;">VÀO GAME</button>
+<div id="auth-screen" class="screen active">
+    <h2>⚔️ ĐĂNG NHẬP / ĐĂNG KÝ</h2>
+    <input type="text" id="user" placeholder="Tên tài khoản">
+    <input type="password" id="pass" placeholder="Mật khẩu">
+    <button onclick="auth()">VÀO GAME</button>
 </div>
 
-<div id="faction-screen" class="screen" style="text-align: center;">
-    <h2>CHỌN TỘC CỦA BẠN</h2>
+<div id="faction-screen" class="screen">
+    <h2>CHỌN TỘC</h2>
     <div id="f-list"></div>
 </div>
 
 <div id="game-screen" class="screen">
-    <div class="grid">
-        <div class="box">
-            <div>👤 <span id="p-name"></span> (<span id="p-faction"></span>)</div>
-            <div>💰 <span id="p-gold">0</span> | 💎 <span id="p-gem">0</span></div>
-            <div>⚔️ Dame: <span id="p-total-dame">20</span></div>
-        </div>
-        <div class="box">
-            <div class="hp-bar"><div id="p-hp-bar" class="hp-fill"></div></div>
-            <div>HP: <span id="p-hp">50</span>/<span id="p-max-hp">50</span></div>
-            <div>🌟 TN: <span id="p-talent">N/A</span></div>
-        </div>
+    <div style="background:#020617; padding:10px; border-radius:5px; text-align: left;">
+        <b>👤 <span id="p-name"></span></b> | 💰 <span id="p-gold">0</span><br>
+        ⚔️ Dame: <span id="p-dame">20</span> | ❤️ HP: <span id="p-hp">50</span>/<span id="p-mhp">50</span>
     </div>
 
-    <div style="display: flex; justify-content: space-between;">
-        <button onclick="showTab('battle')" style="flex:1">CHIẾN ĐẤU</button>
-        <button onclick="showTab('shop')" style="flex:1">CỬA HÀNG</button>
-        <button onclick="showTab('bag')" style="flex:1">BALO/BOOST</button>
+    <div style="margin-top:10px;">
+        <button onclick="tab('battle')">ĐÁNH</button>
+        <button onclick="tab('shop')">SHOP</button>
+        <button onclick="tab('bag')">BALO</button>
     </div>
 
-    <div id="tab-battle" class="tab-content" style="display: block;">
-        <div class="box" style="text-align: center; border-color: #ef4444;">
-            <h3 id="m-name">Đang tìm quái...</h3>
-            <div class="hp-bar"><div id="m-hp-bar" class="hp-fill" style="background: #22c55e;"></div></div>
-            <p>Máu quái: <span id="m-hp">0</span></p>
-            <button onclick="attack()" style="background: #ef4444; padding: 15px 30px; font-weight: bold; width: 100%;">🔥 ĐÁNH (PHẢN 40%)</button>
-            <br>
-            <select id="island-sel" onchange="changeIsland()" style="margin-top:15px; padding: 8px; background: #0f172a; color: white; border: 1px solid var(--accent); border-radius: 5px;">
-                <option value="1">Đảo 1 (Tân thủ)</option>
-                <option value="2">Đảo 2 (Shark Island)</option>
-                <option value="3">Đảo 3 (Long Hình)</option>
-            </select>
-        </div>
+    <div id="tab-battle" class="tab-zone active">
+        <h3 id="m-name">Quái</h3>
+        <div class="hp-bar"><div id="m-hp-bar" class="hp-fill" style="background:#22c55e"></div></div>
+        <button onclick="attack()" style="width:100%; background:#ef4444; color:white; padding:15px;">🔥 ĐÁNH (PHẢN 40%)</button>
+        <select id="isl-sel" onchange="initM()"><option value="1">Đảo 1</option><option value="2">Đảo 2</option><option value="3">Đảo 3</option></select>
     </div>
 
-    <div id="tab-shop" class="tab-content">
-        <div class="grid" style="grid-template-columns: 1fr;">
-            <div class="box">
-                <h4 style="color: var(--accent);">⚔️ VŨ KHÍ</h4>
-                <div id="shop-w-list"></div>
-            </div>
-            <div class="box">
-                <h4 style="color: #ef4444;">🛡️ ÁO GIÁP</h4>
-                <div id="shop-a-list"></div>
-            </div>
-        </div>
+    <div id="tab-shop" class="tab-zone" style="display:none; text-align:left;">
+        <h4>Cửa hàng</h4>
+        <div id="shop-list" style="max-height: 250px; overflow-y: auto;"></div>
     </div>
 
-    <div id="tab-bag" class="tab-content">
-        <div class="box">
-            <h4>🎒 BALO TRANG BỊ</h4>
-            <div id="bag-list"></div>
-        </div>
-        <div class="box" style="margin-top:10px;">
-            <h4>⚡ VẬT PHẨM BOOST</h4>
-            <div id="boost-list"></div>
-        </div>
+    <div id="tab-bag" class="tab-zone" style="display:none; text-align:left;">
+        <h4>Trang bị trong Balo</h4>
+        <div id="bag-list"></div>
+        <h4>Phụ kiện Boost</h4>
+        <div id="boost-list"></div>
     </div>
 
     <div class="log" id="log"></div>
-    <button onclick="saveGame()" style="width:100%; margin-top:10px; background: #166534; font-weight: bold;">LƯU DỮ LIỆU</button>
+    <button onclick="save()" style="background:green; color:white; width:100%; margin-top:10px;">LƯU DỮ LIỆU</button>
 </div>
 
 <script>
-    const STORAGE_KEY = "SOMALIA_V14_DATA_";
-    let p = { name:"", pass:"", faction:"", gold:0, gem:0, hp:50, maxHp:50, baseDame:20, baseHp:50, talent:"Chưa có", bag:[], boosts:[], eqW:null, eqA:null, island:1 };
+    const KEY = "SOMALIA_V14_DATA_"; //
+    let p = { name:"", pass:"", faction:"", gold:0, hp:50, mhp:50, bd:20, bh:50, bag:[], boosts:[], eqW:null, eqA:null, island:1 };
     let curM = null;
 
-    const factions = { 
-        "Cận Chiến":{h:1.1, d:1.2}, "Pháp Sư":{h:1.05, d:1.3}, "Cyborg":{h:0.7, d:1.5}, 
-        "Angel":{h:1.8, d:0.7}, "Devil":{h:0.65, d:1.7}, "Shark":{h:1.6, d:0.7} 
+    const facs = { "Cận Chiến":{h:1.1, d:1.2}, "Shark":{h:1.6, d:0.7}, "Devil":{h:0.65, d:1.7}, "Angel":{h:1.8, d:0.7} };
+    const shopItems = [
+        {id:'w1', n:'Kiếm Gỗ', p:500, d:50}, {id:'w2', n:'Kiếm Sắt', p:5000, d:500}, {id:'w4', n:'Kiếm Shark', p:50000, d:17777}, {id:'w7', n:'Kiếm A', p:1000000, d:200000},
+        {id:'a1', n:'Áo da', p:500, h:50}, {id:'a5', n:'Áo choàng bay', p:50000, h:12111}, {id:'a10', n:'Áo choàng long', p:10000000, h:1000000}
+    ];
+    const mons = { 
+        1: [{n:"Post 1", h:50, g:250}], 
+        2: [{n:"Shark Binh", h:5000, g:30000}], 
+        3: [{n:"Long Nhân", h:2000000, g:10000000, drop:"Long Cốt"}] 
     };
 
-    const shopW = [
-        {id:'w1', n:'Kiếm Gỗ', p:500, d:50}, {id:'w2', n:'Kiếm Sắt', p:5000, d:500}, {id:'w3', n:'Kiếm Vàng', p:10000, d:1000},
-        {id:'w4', n:'Kiếm Shark', p:50000, d:17777}, {id:'w5', n:'Kiếm Kim Long Nhãn', p:99999, d:20000},
-        {id:'w6', n:'Kiếm Thiên Thần', p:350000, d:49000}, {id:'w7', n:'Kiếm A', p:1000000, d:200000}
-    ];
-
-    const shopA = [
-        {id:'a1', n:'Áo da', p:500, h:50}, {id:'a2', n:'Áo lưới', p:2500, h:400}, {id:'a3', n:'Áo hoàng gia', p:10000, h:2000},
-        {id:'a4', n:'Áo choàng ra', p:15000, h:4500}, {id:'a5', n:'Áo choàng bay', p:50000, h:12111},
-        {id:'a6', n:'Áo choàng Atomic', p:120000, h:20000}, {id:'a7', n:'Áo ma thuật', p:450000, h:51111},
-        {id:'a8', n:'Áo hoàng tử bột', p:1000000, h:100000}, {id:'a9', n:'Áo choàng độc', p:5000000, h:700000},
-        {id:'a10', n:'Áo choàng Long', p:10000000, h:1000000}
-    ];
-
-    const monsters = {
-        1: [{n:"Post 1", hp:50, g:250}, {n:"Post 2", hp:90, g:800}, {n:"Post 3", hp:300, g:2500}, {n:"Post Boss", hp:1000, g:10000}],
-        2: [{n:"Shark Binh", hp:5000, g:30000, r:0.3, gn:1}, {n:"Shark Sĩ", hp:10000, g:50000, r:0.5, gn:3}, {n:"Shark Boss", hp:25000, g:100000, r:0.5, gn:10}],
-        3: [{n:"Long Nhân", hp:2000000, g:10000000, r:1, gn:17, drop:"Long Cốt"}]
-    };
-
-    function handleAuth() {
+    function auth() {
         let u = document.getElementById('user').value, ps = document.getElementById('pass').value;
-        if(!u || !ps) return alert("Vui lòng nhập đủ Tên và Mật khẩu!");
-        let saved = localStorage.getItem(STORAGE_KEY + u);
-        if(saved) {
-            let data = JSON.parse(saved);
-            if(data.pass === ps) { p = data; showScreen('game-screen'); updateUI(); changeIsland(); }
-            else alert("Sai mật khẩu!");
+        if(!u || !ps) return;
+        let s = localStorage.getItem(KEY + u);
+        if(s) {
+            let d = JSON.parse(s);
+            if(d.pass === ps) { p = d; start(); } else alert("Sai MK!");
         } else {
-            p.name = u; p.pass = ps; showScreen('faction-screen'); renderFactions();
+            p.name = u; p.pass = ps;
+            document.getElementById('auth-screen').style.display='none';
+            document.getElementById('faction-screen').style.display='block';
+            let fl = document.getElementById('f-list'); fl.innerHTML = "";
+            for(let f in facs) {
+                let b = document.createElement('button'); b.innerText = f;
+                b.onclick = () => { p.faction = f; p.hp = p.mhp = Math.floor(50 * facs[f].h); start(); };
+                fl.appendChild(b);
+            }
         }
     }
 
-    function renderFactions() {
-        let div = document.getElementById('f-list'); div.innerHTML = "";
-        for(let f in factions) {
-            let b = document.createElement('button'); b.innerText = f;
-            b.style.width = "45%"; b.style.padding = "15px"; b.style.margin = "5px";
-            b.onclick = () => { 
-                p.faction = f; 
-                p.baseHp = 50; p.baseDame = 20;
-                p.maxHp = Math.floor(p.baseHp * factions[f].h);
-                p.hp = p.maxHp;
-                showScreen('game-screen'); updateUI(); changeIsland(); saveGame(); 
-            };
-            div.appendChild(b);
-        }
+    function start() {
+        document.querySelectorAll('.screen').forEach(s => s.style.display='none');
+        document.getElementById('game-screen').style.display='block';
+        initM(); update();
+    }
+
+    function initM() {
+        p.island = document.getElementById('isl-sel').value;
+        curM = {...mons[p.island][0]}; update();
     }
 
     function attack() {
-        if(!curM) return;
-        let d = Math.floor(p.baseDame * factions[p.faction].d);
+        let d = Math.floor(p.bd * facs[p.faction].d);
         if(p.eqW) d += p.eqW.d;
         if(p.boosts.includes("Long Cốt")) d *= 1.3;
-
-        curM.hp -= d;
-        let ref = Math.floor(d * 0.4);
-        p.hp -= ref;
-        addLog(`Bạn đánh ${curM.n} -${d}. Bị phản -${ref}`);
-
-        if(curM.hp <= 0) {
+        curM.h -= d; p.hp -= Math.floor(d * 0.4);
+        if(curM.h <= 0) {
             p.gold += curM.g;
-            if(Math.random() < (curM.r || 0)) p.gem += curM.gn;
-            if(curM.drop && Math.random() < 0.1 && !p.boosts.includes(curM.drop)) p.boosts.push(curM.drop);
-            addLog(`Thắng! Nhận ${curM.g.toLocaleString()}$`);
-            changeIsland(); // Tự hồi quái mới
+            if(curM.drop && Math.random() < 0.2) p.boosts.push(curM.drop);
+            addLog("Thắng! +"+curM.g); initM();
         }
-        if(p.hp <= 0) { p.hp = p.maxHp; addLog("Bạn đã gục ngã! Tự động hồi phục."); }
-        updateUI();
+        if(p.hp <= 0) { p.hp = p.mhp; addLog("Hồi sinh!"); }
+        update();
+    }
+
+    function tab(id) {
+        document.querySelectorAll('.tab-zone').forEach(z => z.style.display='none');
+        document.getElementById('tab-'+id).style.display='block';
+        if(id === 'shop') renderShop();
+        if(id === 'bag') renderBag();
     }
 
     function renderShop() {
-        let sw = document.getElementById('shop-w-list'); sw.innerHTML = "";
-        shopW.forEach(i => {
+        let s = document.getElementById('shop-list'); s.innerHTML = "";
+        shopItems.forEach(i => {
             let row = document.createElement('div'); row.className = "item-row";
-            let has = p.bag.some(x => x.id === i.id);
-            row.innerHTML = `<span>${i.n} (+${i.d} Dame)</span>`;
-            let b = document.createElement('button');
-            b.innerText = has ? "Đã mua" : i.p.toLocaleString() + "$";
-            b.disabled = has;
-            b.onclick = () => {
-                if(p.gold >= i.p) { p.gold -= i.p; p.bag.push({...i, type:'w'}); renderShop(); updateUI(); saveGame(); }
-                else alert("Không đủ tiền!");
-            };
-            row.appendChild(b); sw.appendChild(row);
-        });
-
-        let sa = document.getElementById('shop-a-list'); sa.innerHTML = "";
-        shopA.forEach(i => {
-            let row = document.createElement('div'); row.className = "item-row";
-            let has = p.bag.some(x => x.id === i.id);
-            row.innerHTML = `<span>${i.n} (+${i.h} HP)</span>`;
-            let b = document.createElement('button');
-            b.innerText = has ? "Đã mua" : i.p.toLocaleString() + "$";
-            b.disabled = has;
-            b.onclick = () => {
-                if(p.gold >= i.p) { p.gold -= i.p; p.bag.push({...i, type:'a'}); renderShop(); updateUI(); saveGame(); }
-                else alert("Không đủ tiền!");
-            };
-            row.appendChild(b); sa.appendChild(row);
+            row.innerHTML = `<span>${i.n} (${i.p}$)</span>`;
+            let b = document.createElement('button'); b.innerText = "Mua";
+            b.onclick = () => { if(p.gold >= i.p) { p.gold -= i.p; p.bag.push(i); update(); renderShop(); } };
+            row.appendChild(b); s.appendChild(row);
         });
     }
 
     function renderBag() {
-        let div = document.getElementById('bag-list'); div.innerHTML = "";
-        if(p.bag.length === 0) div.innerHTML = "<p>Balo trống</p>";
-        p.bag.forEach(i => {
+        let bl = document.getElementById('bag-list'); bl.innerHTML = "";
+        p.bag.forEach((i, idx) => {
             let row = document.createElement('div'); row.className = "item-row";
-            let isEq = (p.eqW?.id === i.id || p.eqA?.id === i.id);
-            row.innerHTML = `<span>${i.n} ${isEq ? '<b style="color:var(--accent)">[ĐEO]</b>' : ''}</span>`;
-            let b = document.createElement('button');
-            b.innerText = isEq ? "Tháo" : "Mặc";
-            b.style.background = isEq ? "#991b1b" : "#166534";
+            let isE = (p.eqW?.n === i.n || p.eqA?.n === i.n);
+            row.innerHTML = `<span>${i.n} ${isE ? '[ĐEO]' : ''}</span>`;
+            let b = document.createElement('button'); b.innerText = isE ? "Tháo" : "Mặc";
             b.onclick = () => {
-                if(i.type === 'w') p.eqW = isEq ? null : i;
-                else p.eqA = isEq ? null : i;
-                updateUI(); saveGame();
+                if(i.d) p.eqW = isE ? null : i;
+                else p.eqA = isE ? null : i;
+                update(); renderBag();
             };
-            row.appendChild(b); div.appendChild(row);
+            row.appendChild(b); bl.appendChild(row);
         });
-        document.getElementById('boost-list').innerHTML = p.boosts.length ? p.boosts.map(b => `<div class='item-row'>${b} (Dame +30%, Máu -10%)</div>`).join("") : "Trống";
+        document.getElementById('boost-list').innerText = p.boosts.join(", ") || "Trống";
     }
 
-    function updateUI() {
+    function update() {
         document.getElementById('p-name').innerText = p.name;
-        document.getElementById('p-faction').innerText = p.faction;
         document.getElementById('p-gold').innerText = p.gold.toLocaleString();
-        document.getElementById('p-gem').innerText = p.gem;
-        
-        // Tính Dame
-        let d = Math.floor(p.baseDame * (factions[p.faction]?.d || 1));
-        if(p.eqW) d += p.eqW.d;
-        if(p.boosts.includes("Long Cốt")) d *= 1.3;
-        document.getElementById('p-total-dame').innerText = Math.floor(d);
-
-        // Tính HP
-        let h = Math.floor(p.baseHp * (factions[p.faction]?.h || 1));
-        if(p.eqA) h += p.eqA.h;
-        if(p.boosts.includes("Long Cốt")) h *= 0.9;
-        p.maxHp = Math.floor(h);
-        document.getElementById('p-max-hp').innerText = p.maxHp;
+        let td = Math.floor(p.bd * facs[p.faction].d) + (p.eqW ? p.eqW.d : 0);
+        document.getElementById('p-dame').innerText = Math.floor(p.boosts.includes("Long Cốt") ? td*1.3 : td);
+        let th = Math.floor(p.bh * facs[p.faction].h) + (p.eqA ? p.eqA.h : 0);
+        p.mhp = Math.floor(p.boosts.includes("Long Cốt") ? th*0.9 : th);
         document.getElementById('p-hp').innerText = p.hp;
-        document.getElementById('p-hp-bar').style.width = (p.hp/p.maxHp*100) + "%";
-        
+        document.getElementById('p-mhp').innerText = p.mhp;
+        document.getElementById('p-hp-bar').style.width = (p.hp/p.mhp*100) + "%";
         if(curM) {
             document.getElementById('m-name').innerText = curM.n;
-            document.getElementById('m-hp').innerText = curM.hp;
-            let ori = monsters[p.island].find(x => x.n === curM.n);
-            document.getElementById('m-hp-bar').style.width = (curM.hp/ori.hp*100) + "%";
+            document.getElementById('m-hp-bar').style.width = (curM.h / mons[p.island][0].h * 100) + "%";
         }
-        renderBag();
     }
 
-    function changeIsland() {
-        p.island = document.getElementById('island-sel').value;
-        curM = {...monsters[p.island][0]}; // Luôn lấy quái đầu tiên khi đổi đảo
-        updateUI();
-    }
-
-    function showTab(id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.getElementById('tab-'+id).style.display = 'block';
-        if(id === 'shop') renderShop();
-    }
-
-    function addLog(m) { let l = document.getElementById('log'); l.innerHTML = `> ${m}<br>` + l.innerHTML; }
-    function saveGame() { localStorage.setItem(STORAGE_KEY + p.name, JSON.stringify(p)); addLog("Đã lưu dữ liệu."); }
-    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    function addLog(m) { let l = document.getElementById('log'); l.innerHTML = "> " + m + "<br>" + l.innerHTML; }
+    function save() { localStorage.setItem(KEY + p.name, JSON.stringify(p)); addLog("Đã lưu!"); }
 </script>
 </body>
 </html>
