@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Island RPG</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .screen { display: none; width: 100%; max-width: 900px; background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); }
+        .active { display: block; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-box { background: #020617; padding: 10px; border-radius: 8px; border-left: 4px solid var(--accent); }
+        button { background: #334155; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin: 3px; transition: 0.2s; }
+        button:hover { background: var(--accent); color: #000; }
+        .hp-bar { background: #450a0a; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 0; border: 1px solid #000; }
+        .hp-fill { background: #ef4444; height: 100%; width: 100%; transition: 0.3s; }
+        .log { background: #000; height: 150px; overflow-y: auto; padding: 10px; font-size: 13px; border-radius: 5px; border: 1px solid #334155; margin: 10px 0; }
+        .item-slot { background: #0f172a; border: 1px dashed #475569; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .rarity-01 { color: #f43f5e; font-weight: bold; text-shadow: 0 0 5px #f43f5e; } /* 0.1% trở xuống */
+        .tab-btn { background: #1e293b; border-bottom: 2px solid transparent; border-radius: 0; }
+        .tab-btn.active-tab { border-bottom: 2px solid var(--accent); background: #334155; }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen" class="screen active">
+    <h2>⚔️ RPG ISLAND ADVENTURE</h2>
+    <input type="text" id="username" placeholder="Nhập tên tài khoản..." style="width: 80%; padding: 12px; border-radius: 5px; border: none; margin-bottom: 15px;">
+    <button onclick="login()" style="width: 85%; font-weight: bold;">VÀO THẾ GIỚI</button>
+</div>
+
+<div id="faction-screen" class="screen">
+    <h2>CHỌN TỘC CỦA BẠN</h2>
+    <p>Mỗi tộc có chỉ số cộng thêm vĩnh viễn</p>
+    <div id="faction-list"></div>
+</div>
+
+<div id="game-screen" class="screen">
+    <div class="grid">
+        <div class="stat-box">
+            <div><b>Nhân vật:</b> <span id="p-name"></span> (<span id="p-faction"></span>)</div>
+            <div><b>Tiền:</b> <span id="p-gold" style="color:gold">0</span> | <b>Ngọc:</b> <span id="p-gem" style="color:cyan">0</span></div>
+            <div><b>Dame:</b> <span id="p-dame">20</span> | <b>Tài năng:</b> <span id="p-talent">N/A</span></div>
+        </div>
+        <div class="stat-box">
+            <div class="hp-bar"><div id="p-hp-bar" class="hp-fill"></div></div>
+            <div><b>Máu:</b> <span id="p-hp">50</span> / <span id="p-max-hp">50</span></div>
+        </div>
+    </div>
+
+    <div style="margin-top:15px;">
+        <button class="tab-btn active-tab" onclick="showTab('battle')">CHIẾN ĐẤU</button>
+        <button class="tab-btn" onclick="showTab('shop')">CỬA HÀNG</button>
+        <button class="tab-btn" onclick="showTab('bag')">BALO & BOOST</button>
+        <button class="tab-btn" onclick="showTab('talent')">TÀI NĂNG</button>
+    </div>
+
+    <div id="tab-battle" class="tab-content">
+        <h3>ĐẢO: <select id="island-sel" onchange="loadMonsters()"><option value="1">Đảo 1</option><option value="2">Đảo 2</option><option value="3">Đảo 3</option></select></h3>
+        <div id="monster-list"></div>
+        <div class="log" id="log">Chào mừng bạn trở lại!</div>
+    </div>
+
+    <div id="tab-shop" class="tab-content" style="display:none;">
+        <h3>CỬA HÀNG TRANG BỊ</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div id="shop-weapons"><h4>Vũ khí</h4></div>
+            <div id="shop-armors"><h4>Áo giáp</h4></div>
+        </div>
+    </div>
+
+    <div id="tab-bag" class="tab-content" style="display:none;">
+        <div class="grid">
+            <div>
+                <h3>🎒 BALO (Trang bị)</h3>
+                <div id="bag-items"></div>
+            </div>
+            <div>
+                <h3>⚡ BOOST (Phụ kiện)</h3>
+                <div id="boost-items"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-talent" class="tab-content" style="display:none;">
+        <h3>TÀI NĂNG (Gems)</h3>
+        <p>Tỉ lệ Long Võ (1%), Vô Thượng (0.1%), Thần Thoại (0.001%)</p>
+        <button onclick="rollTalent(1)">Roll x1 (1 Ngọc)</button>
+        <button onclick="rollTalent(10)">Roll x10 (10 Ngọc)</button>
+    </div>
+
+</div>
+
+<script>
+    const KEY = "SOMALIA_V14_DATA_";
+    let p = { name: "", faction: "", gold: 0, gem: 0, hp: 50, maxHp: 50, baseDame: 20, baseHp: 50, talent: "Chưa có", bag: [], boosts: [], eqWeapon: null, eqArmor: null, island: 1 };
+    let curM = null;
+
+    const factions = {
+        "Cận Chiến": {h:1.1, d:1.2}, "Pháp Sư": {h:1.05, d:1.3}, "Cyborg": {h:0.7, d:1.5},
+        "Angel": {h:1.8, d:0.7}, "Devil": {h:0.65, d:1.7}, "Shark": {h:1.6, d:0.7}
+    };
+
+    const shopW = [
+        {id:'w1', n:'Kiếm Gỗ', p:500, d:50}, {id:'w2', n:'Kiếm Sắt', p:5000, d:500}, 
+        {id:'w3', n:'Kiếm Vàng', p:10000, d:1000}, {id:'w4', n:'Kiếm Shark', p:50000, d:17777},
+        {id:'w5', n:'Kiếm Kim Long Nhãn', p:99999, d:20000}, {id:'w6', n:'Kiếm Thiên Thần', p:350000, d:49000},
+        {id:'w7', n:'Kiếm A', p:1000000, d:200000}
+    ];
+
+    const shopA = [
+        {id:'a1', n:'Áo da', p:500, h:50}, {id:'a2', n:'Áo lưới', p:2500, h:400},
+        {id:'a3', n:'Áo hoàng gia', p:10000, h:2000}, {id:'a4', n:'Áo choàng ra', p:15000, h:4500},
+        {id:'a5', n:'Áo choàng bay', p:50000, h:12111}, {id:'a6', n:'Áo choàng Atomic', p:120000, h:20000},
+        {id:'a7', n:'Áo ma thuật Shadows', p:450000, h:51111}, {id:'a8', n:'Áo hoàng tử bột', p:1000000, h:100000},
+        {id:'a9', n:'Áo choàng độc', p:5000000, h:700000}, {id:'a10', n:'Áo choàng Long', p:10000000, h:1000000}
+    ];
+
+    const monsters = {
+        1: [{n:"Post 1", hp:50, g:250}, {n:"Post 2", hp:90, g:800}, {n:"Post 3", hp:300, g:2500}, {n:"Post Boss", hp:1000, g:10000}],
+        2: [{n:"Shark Binh", hp:5000, g:30000, r:0.3, gn:1}, {n:"Shark Sĩ", hp:10000, g:50000, r:0.5, gn:3}, {n:"Shark Boss", hp:25000, g:100000, r:0.5, gn:10, timed:10}],
+        3: [{n:"Long Hình", hp:45999, g:300000, r:0.1, gn:20}, {n:"Long Thể", hp:100000, g:500000, r:0.9, gn:10}, {n:"Long Rồng", hp:1000000, g:7000000, r:0.3, gn:30}, {n:"Long Nhân", hp:2000000, g:10000000, r:1, gn:17, drop:"Long Cốt"}]
+    };
+
+    const talents = [
+        {n:"Hỏa", r:0.3, d:0.01}, {n:"Thủy", r:0.2, h:0.03}, {n:"Hỏa Lực", r:0.1, d:0.05}, 
+        {n:"Thủy Lôi", r:0.05, h:0.15}, {n:"Long Võ", r:0.01, d:0.15, h:0.05},
+        {n:"Lóe Sáng", r:0.005, d:0.2, h:0.07}, {n:"Vô Thượng", r:0.001, d:0.3, h:0.3},
+        {n:"Thần Thoại", r:0.00001, d:0.3, h:0.3, x2:true}
+    ];
+
+    function login() {
+        let u = document.getElementById('username').value;
+        if(!u) return; p.name = u;
+        let s = localStorage.getItem(KEY + u);
+        if(s) { p = JSON.parse(s); showScreen('game-screen'); } 
+        else { showScreen('faction-screen'); renderFactions(); }
+        updateUI(); loadMonsters(); renderShop();
+    }
+
+    function renderFactions() {
+        let div = document.getElementById('faction-list');
+        for(let f in factions) {
+            let b = document.createElement('button');
+            b.innerText = f; b.onclick = () => {
+                p.faction = f; p.baseHp = 50; p.baseDame = 20;
+                p.maxHp = Math.floor(p.baseHp * factions[f].h);
+                p.hp = p.maxHp;
+                showScreen('game-screen'); save(); updateUI();
+            };
+            div.appendChild(b);
+        }
+    }
+
+    function loadMonsters() {
+        let isl = document.getElementById('island-sel').value;
+        let div = document.getElementById('monster-list'); div.innerHTML = "";
+        monsters[isl].forEach(m => {
+            let b = document.createElement('button');
+            b.innerText = `Đánh ${m.n} (${m.hp}HP)`;
+            b.onclick = () => startFight(m);
+            div.appendChild(b);
+        });
+    }
+
+    function startFight(m) {
+        if(m.timed && new Date().getMinutes() % m.timed !== 0) return addLog("Boss chưa xuất hiện!");
+        curM = {...m};
+        let finalDame = p.baseDame * factions[p.faction].d;
+        if(p.eqWeapon) finalDame += p.eqWeapon.d;
+        // Cộng dồn boost Long Cốt
+        if(p.boosts.includes("Long Cốt")) finalDame *= 1.3;
+
+        curM.hp -= finalDame;
+        p.hp -= Math.floor(finalDame * 0.4); // Phản dame 40%
+
+        addLog(`Bạn chém ${m.n} -${Math.floor(finalDame)}. Bị phản -${Math.floor(finalDame*0.4)}`);
+
+        if(curM.hp <= 0) {
+            let reward = m.g;
+            if(p.talent === "Thần Thoại") reward *= 2;
+            p.gold += reward;
+            if(Math.random() < (m.r || 0)) p.gem += m.gn;
+            if(m.drop && Math.random() < 0.1 && !p.boosts.includes(m.drop)) p.boosts.push(m.drop);
+            addLog(`Thắng! +${reward}$`);
+            curM = null;
+        }
+        if(p.hp <= 0) { p.hp = p.maxHp; addLog("Bạn đã gục ngã, hồi sinh!"); curM = null; }
+        updateUI(); save();
+    }
+
+    function renderShop() {
+        let sw = document.getElementById('shop-weapons');
+        shopW.forEach(i => {
+            let b = document.createElement('button');
+            b.innerText = `${i.n} (${i.p}$)`;
+            b.disabled = p.bag.some(x => x.id === i.id);
+            b.onclick = () => buy(i, 'w');
+            sw.appendChild(b);
+        });
+        let sa = document.getElementById('shop-armors');
+        shopA.forEach(i => {
+            let b = document.createElement('button');
+            b.innerText = `${i.n} (${i.p}$)`;
+            b.disabled = p.bag.some(x => x.id === i.id);
+            b.onclick = () => buy(i, 'a');
+            sa.appendChild(b);
+        });
+    }
+
+    function buy(item, type) {
+        if(p.gold >= item.p) {
+            p.gold -= item.p; p.bag.push({...item, type});
+            addLog(`Đã mua ${item.n}! Vào Balo để trang bị.`);
+            renderShop(); updateUI(); save();
+        } else alert("Thiếu tiền!");
+    }
+
+    function updateUI() {
+        document.getElementById('p-name').innerText = p.name;
+        document.getElementById('p-faction').innerText = p.faction;
+        document.getElementById('p-gold').innerText = p.gold.toLocaleString();
+        document.getElementById('p-gem').innerText = p.gem;
+        document.getElementById('p-hp').innerText = p.hp;
+        document.getElementById('p-talent').innerText = p.talent;
+        
+        // Tính Dame tổng
+        let d = p.baseDame * factions[p.faction].d;
+        if(p.eqWeapon) d += p.eqWeapon.d;
+        if(p.boosts.includes("Long Cốt")) d *= 1.3;
+        document.getElementById('p-dame').innerText = Math.floor(d);
+
+        // Tính HP tổng
+        let h = p.baseHp * factions[p.faction].h;
+        if(p.eqArmor) h += p.eqArmor.h;
+        if(p.boosts.includes("Long Cốt")) h *= 0.9;
+        p.maxHp = Math.floor(h);
+        document.getElementById('p-max-hp').innerText = p.maxHp;
+        document.getElementById('p-hp-bar').style.width = (p.hp/p.maxHp*100) + "%";
+
+        renderBag();
+    }
+
+    function renderBag() {
+        let div = document.getElementById('bag-items'); div.innerHTML = "";
+        p.bag.forEach(i => {
+            let s = document.createElement('div'); s.className = 'item-slot';
+            let isEq = (p.eqWeapon?.id === i.id || p.eqArmor?.id === i.id);
+            s.innerHTML = `<span>${i.n} ${isEq ? '<b>(ĐANG ĐEO)</b>' : ''}</span>`;
+            let b = document.createElement('button');
+            b.innerText = isEq ? "Tháo" : "Trang bị";
+            b.onclick = () => equip(i);
+            s.appendChild(b); div.appendChild(s);
+        });
+        document.getElementById('boost-items').innerText = p.boosts.join(", ") || "Trống";
+    }
+
+    function equip(item) {
+        if(item.type === 'w') p.eqWeapon = (p.eqWeapon?.id === item.id) ? null : item;
+        else p.eqArmor = (p.eqArmor?.id === item.id) ? null : item;
+        updateUI(); save();
+    }
+
+    function rollTalent(t) {
+        if(p.gem < t) return alert("Hết ngọc!");
+        p.gem -= t; let win = null;
+        for(let i=0; i<t; i++) {
+            let r = Math.random(); let acc = 0;
+            for(let tal of talents) {
+                acc += tal.r;
+                if(r <= acc) { if(!win || talents.indexOf(tal) > talents.indexOf(win)) win = tal; break; }
+            }
+        }
+        if(confirm("Tài năng mới: " + win.n + ". Chấp nhận?")) p.talent = win.n;
+        updateUI(); save();
+    }
+
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
+        document.getElementById('tab-'+id).style.display = 'block';
+        event.target.classList.add('active-tab');
+    }
+
+    function addLog(m) { let l = document.getElementById('log'); l.innerHTML = `> ${m}<br>` + l.innerHTML; }
+    function save() { localStorage.setItem(KEY + p.name, JSON.stringify(p)); }
+    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+</script>
+</body>
+</html>
